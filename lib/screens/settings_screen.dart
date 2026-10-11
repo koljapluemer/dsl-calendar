@@ -70,25 +70,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (repo.errors.isNotEmpty) ...[
           const SizedBox(height: 32),
           Text(
-            'Problems (${repo.errors.length})',
+            'Invalid files (${repo.errors.length})',
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           for (final error in repo.errors)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.basename(error.path)),
-                  Text(
-                    error.message,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                ],
-              ),
+            _Problem(
+              path: error.path,
+              lines: [
+                ?error.readError,
+                for (final d in error.errors) d.toString(),
+              ],
+              color: theme.colorScheme.error,
+            ),
+        ],
+        if (repo.itemsWithWarnings.isNotEmpty) ...[
+          const SizedBox(height: 32),
+          Text(
+            'Warnings (${repo.itemsWithWarnings.length})',
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          for (final item in repo.itemsWithWarnings)
+            _Problem(
+              path: item.path,
+              lines: [for (final d in item.warnings) d.toString()],
+              color: theme.colorScheme.outline,
             ),
         ],
         if (Platform.isAndroid) ...[
@@ -106,6 +113,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// A file name with one line per problem, e.g. `invalid_value · line 2 · "26-02-30"`.
+class _Problem extends StatelessWidget {
+  const _Problem({
+    required this.path,
+    required this.lines,
+    required this.color,
+  });
+
+  final String path;
+  final List<String> lines;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall?.copyWith(color: color);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(p.basename(path)),
+          for (final line in lines) Text(line, style: style),
+        ],
+      ),
     );
   }
 }

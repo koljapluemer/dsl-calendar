@@ -1,6 +1,10 @@
 default:
     @just --list
 
+# Copy the item language's keyword schema in from the sibling dsl repo
+sync-spec:
+    cp ../dsl/spec/keywords.yaml assets/dsl/keywords.yaml
+
 # Run the desktop app with hot reload
 dev:
     flutter run -d linux

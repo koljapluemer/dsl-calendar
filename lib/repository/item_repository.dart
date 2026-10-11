@@ -1,19 +1,23 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../dsl/schema.dart';
 import '../models/date_only.dart';
 import '../models/item.dart';
 import '../models/item_parser.dart';
 
 const _prefsFolderKey = 'data_folder';
+const _schemaAsset = 'assets/dsl/keywords.yaml';
 
 /// Reads and parses every `*.txt` file directly inside [folderPath]. Runs in a
 /// background isolate via [compute] so scanning a large folder never blocks the
 /// UI thread. A file that can't be read or parsed becomes a [ParseError], never
 /// a failure of the whole load.
-List<ParseResult> parseFolderIsolate(String folderPath) {
+List<ParseResult> parseFolderIsolate((Schema, String) args) {
+  final (schema, folderPath) = args;
   final dir = Directory(folderPath);
   final results = <ParseResult>[];
   if (!dir.existsSync()) return results;
@@ -23,9 +27,9 @@ List<ParseResult> parseFolderIsolate(String folderPath) {
       continue;
     }
     try {
-      results.add(parseItem(entity.path, entity.readAsStringSync()));
+      results.add(parseItem(schema, entity.path, entity.readAsStringSync()));
     } catch (e) {
-      results.add(ParseError(entity.path, 'Could not read file: $e'));
+      results.add(ParseError(entity.path, const [], readError: '$e'));
     }
   }
   return results;
@@ -41,6 +45,7 @@ class ItemRepository extends ChangeNotifier {
   bool hasLoaded = false;
   String? loadError;
 
+  Schema? _schema;
   List<Item> _items = [];
   List<ParseError> _errors = [];
 
@@ -48,8 +53,13 @@ class ItemRepository extends ChangeNotifier {
 
   List<Item> get items => List.unmodifiable(_items);
 
-  /// Files that couldn't be parsed, by path.
+  /// Files that aren't valid items, by path.
   List<ParseError> get errors => List.unmodifiable(_errors);
+
+  /// Valid items that still have warnings, by path.
+  List<Item> get itemsWithWarnings =>
+      _items.where((i) => i.warnings.isNotEmpty).toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -71,7 +81,10 @@ class ItemRepository extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final parsed = await compute(parseFolderIsolate, folderPath!);
+      final schema = _schema ??= Schema.fromYaml(
+        await rootBundle.loadString(_schemaAsset),
+      );
+      final parsed = await compute(parseFolderIsolate, (schema, folderPath!));
       _items = [
         for (final r in parsed)
           if (r is ParsedItem) r.item,

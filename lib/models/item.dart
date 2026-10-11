@@ -1,6 +1,8 @@
+import '../dsl/document.dart';
 import 'date_only.dart';
 
-/// What makes an item show up on a given day. Exactly one per item.
+/// When an item shows up in the calendar — the calendar's meaning for the
+/// primary keywords it knows.
 sealed class ItemKind {
   const ItemKind();
 
@@ -17,8 +19,8 @@ class Appointment extends ItemKind {
   bool occursOn(DateOnly day) => day == date;
 }
 
-/// `recurring <weekday> [until <date>]` — every [weekday] (1 = Mon .. 7 = Sun),
-/// with no start bound, up to and including [until] when set.
+/// `recurring <weekday> [until <date|month>]` — every [weekday] (1 = Mon ..
+/// 7 = Sun), with no start bound, up to and including [until] when set.
 class Recurring extends ItemKind {
   const Recurring(this.weekday, {this.until});
 
@@ -30,30 +32,28 @@ class Recurring extends ItemKind {
       day.weekday == weekday && (until == null || day.compareTo(until!) <= 0);
 }
 
-/// One item, parsed from one `.txt` file in the data folder. See
-/// `docs/data-format.md` for the language.
+/// One valid item file. See the dsl repo's `spec/language.md` for the format.
 class Item {
   const Item({
     required this.path,
     required this.title,
     required this.kind,
-    this.notes = const [],
-    this.extraLines = const [],
+    this.description = const [],
+    this.warnings = const [],
   });
 
   final String path;
-
-  /// The first line, verbatim.
   final String title;
 
-  /// Free-text lines between the title and the first keyword line.
-  final List<String> notes;
+  /// Verbatim lines between title and keyword section.
+  final List<String> description;
 
-  final ItemKind kind;
+  /// Null for a valid item whose primary keyword the calendar doesn't know
+  /// yet (added to the schema later) — it then falls on no day.
+  final ItemKind? kind;
 
-  /// Keyword lines using reserved keywords that aren't supported yet (e.g.
-  /// `iterable d 4 0.4`), kept raw and otherwise ignored.
-  final List<String> extraLines;
+  /// E.g. unknown keywords. They don't make the item invalid.
+  final List<Diagnostic> warnings;
 
-  bool occursOn(DateOnly day) => kind.occursOn(day);
+  bool occursOn(DateOnly day) => kind?.occursOn(day) ?? false;
 }

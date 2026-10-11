@@ -90,23 +90,26 @@ flutter analyze
 
 ## Data format
 
-Each item is one `*.txt` file directly inside the data folder:
+Each item is one `*.txt` file directly inside the data folder, written in the
+item language specified in the sibling `dsl` repo:
 
 ```
 HCI lecture 4pm-7pm
+(bring laptop)
 recurring mo until 27-03
 ```
 
-- The first line is the title. It is shown verbatim.
-- Optional free-text note lines follow the title.
-- Then come keyword lines. An item needs exactly one of:
-  - `appointment yy-mm-dd`
-  - `recurring <mo..su> [until yy-mm-dd | yy-mm]`
-- Files that don't parse are skipped and listed under "Problems" in Settings.
+- The first line is the title.
+- Description lines follow it.
+- The keyword section starts at the first line that begins with a primary
+  keyword (`appointment yy-mm-dd`, `recurring <mo..su> [until yy-mm-dd|yy-mm]`).
 
-See [docs/data-format.md](docs/data-format.md) for the full rules. See
-`lib/models/item_parser.dart` for the parser, and
-`lib/repository/item_repository.dart` for the folder scan and in-memory store.
+The keyword schema is vendored at `assets/dsl/keywords.yaml`. Refresh it with
+`just sync-spec`.
+
+See [docs/data-format.md](docs/data-format.md) for what the calendar does with
+items. See `lib/dsl/` for the generic, schema-driven parser, and
+`lib/models/item_parser.dart` for the calendar's meaning of keywords.
 
 ## Screens
 
@@ -116,5 +119,5 @@ See [docs/data-format.md](docs/data-format.md) for the full rules. See
   each day's items (empty days included). Defaults to the current week,
   Sunday to Saturday.
 - **Settings**: shows the current data folder and the loaded item count. Lets
-  you pick a different folder, reload it, and see files that failed to parse.
+  you pick a different folder, reload it, and see invalid files and warnings.
   On Android, also lets you (re-)grant full disk access.

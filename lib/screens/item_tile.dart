@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/item.dart';
 
-/// One item as listed under a day: its title verbatim, any note lines muted
-/// beneath it, and a "weekly" marker on recurring items.
+/// One item as listed under a day: its title, its description muted beneath
+/// it, and a "weekly" marker on recurring items.
 class ItemTile extends StatelessWidget {
   const ItemTile({super.key, required this.item});
 
@@ -32,8 +32,11 @@ class ItemTile extends StatelessWidget {
                 ),
             ],
           ),
-          for (final note in item.notes)
-            Text(note, style: theme.textTheme.bodySmall?.merge(muted)),
+          if (item.description.isNotEmpty)
+            Text(
+              item.description.join('\n'),
+              style: theme.textTheme.bodySmall?.merge(muted),
+            ),
         ],
       ),
     );
