@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../repository/entry_repository.dart';
-import 'agenda_screen.dart';
-import 'entry_form_screen.dart';
+import '../repository/item_repository.dart';
+import 'day_screen.dart';
+import 'range_screen.dart';
 import 'settings_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.repository});
 
-  final EntryRepository repository;
+  final ItemRepository repository;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -20,8 +20,8 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      AgendaScreen(repository: widget.repository),
-      EntryFormScreen(repository: widget.repository),
+      DayScreen(repository: widget.repository),
+      RangeScreen(repository: widget.repository),
       SettingsScreen(repository: widget.repository),
     ];
     return Scaffold(
@@ -32,11 +32,11 @@ class _HomeShellState extends State<HomeShell> {
               selectedIndex: _index,
               onDestinationSelected: (i) => setState(() => _index = i),
               destinations: const [
+                NavigationDestination(icon: Icon(Icons.today), label: 'Day'),
                 NavigationDestination(
-                  icon: Icon(Icons.calendar_today),
-                  label: 'Calendar',
+                  icon: Icon(Icons.date_range),
+                  label: 'Range',
                 ),
-                NavigationDestination(icon: Icon(Icons.add), label: 'Add'),
                 NavigationDestination(
                   icon: Icon(Icons.settings),
                   label: 'Settings',

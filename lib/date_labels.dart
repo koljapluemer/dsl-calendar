@@ -1,4 +1,4 @@
-import 'models/entry.dart';
+import 'models/date_only.dart';
 
 const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const _months = [

@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 
-import '../repository/entry_repository.dart';
+import '../repository/item_repository.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.repository});
 
-  final EntryRepository repository;
+  final ItemRepository repository;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -46,10 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 8),
         Text(repo.folderPath ?? 'Not set'),
         const SizedBox(height: 4),
-        Text(
-          '${repo.count} entries loaded',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('${repo.count} items loaded', style: theme.textTheme.bodySmall),
         if (repo.loadError != null) ...[
           const SizedBox(height: 8),
           Text(
@@ -62,6 +60,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: _busy ? null : _pickFolder,
           child: Text(_busy ? 'Loading…' : 'Choose folder'),
         ),
+        if (repo.folderPath != null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton(
+            onPressed: repo.isLoading ? null : repo.loadFromDisk,
+            child: Text(repo.isLoading ? 'Reloading…' : 'Reload'),
+          ),
+        ],
+        if (repo.errors.isNotEmpty) ...[
+          const SizedBox(height: 32),
+          Text(
+            'Problems (${repo.errors.length})',
+            style: theme.textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          for (final error in repo.errors)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(p.basename(error.path)),
+                  Text(
+                    error.message,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
         if (Platform.isAndroid) ...[
           const SizedBox(height: 32),
           Text('Storage permission', style: theme.textTheme.titleMedium),

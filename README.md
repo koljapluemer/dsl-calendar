@@ -2,8 +2,9 @@
 
 ![software main view](docs/screenshot.png)
 
-A minimal Flutter calendar. One entry per `.json` file in a folder you pick;
-an entry is just a **date** and a line of **text** — no times, nothing else.
+A minimal, read-only Flutter calendar. One item per `.txt` file in a folder you
+pick. Each file is written in a small line-based language and edited in any
+text editor (see [docs/data-format.md](docs/data-format.md)).
 Targets Linux desktop and Android (sideload) only.
 
 ## Prerequisites
@@ -31,8 +32,8 @@ flutter run -d <device> # Android device/emulator
 On first launch the app opens straight into Settings and asks you to pick a data
 folder — nothing is hardcoded. The whole folder is parsed into memory once, in a
 background isolate (`compute`), then the app works entirely off that in-memory
-copy for the rest of the session (it assumes nothing else edits the folder
-concurrently).
+copy. Because the files are edited in other apps, Settings has a **Reload**
+button that re-reads the folder.
 
 - **Android**: on launch the app requests "All files access"
   (`MANAGE_EXTERNAL_STORAGE`) so it can read/write a folder anywhere on the
@@ -89,38 +90,31 @@ flutter analyze
 
 ## Data format
 
-Each entry is one `*.json` file directly inside the data folder, a single JSON
-object with three keys:
+Each item is one `*.txt` file directly inside the data folder:
 
-```json
-{
-  "date": "2026-08-29",
-  "content": "the entry's text",
-  "done": false
-}
+```
+HCI lecture 4pm-7pm
+recurring mo until 27-03
 ```
 
-- `date` is `YYYY-MM-DD` — a calendar day, no time component.
-- `content` is a plain-text line, shown exactly as typed — no markdown rendering.
-- `done` is a boolean; missing values in older files default to `false`.
-- A missing/invalid `date` falls back to today; a missing `content` to empty.
-- Writes go through a temp file + atomic rename, so a crash mid-write can't
-  leave a half-written file.
-- The filename (`<date>-<6 hex chars>.json`) is only an id — the `date` field is
-  the source of truth, so editing an entry's date rewrites the file in place
-  without renaming it.
+- The first line is the title. It is shown verbatim.
+- Optional free-text note lines follow the title.
+- Then come keyword lines. An item needs exactly one of:
+  - `appointment yy-mm-dd`
+  - `recurring <mo..su> [until yy-mm-dd | yy-mm]`
+- Files that don't parse are skipped and listed under "Problems" in Settings.
 
-See `lib/models/entry.dart` for the read/write logic and
-`lib/repository/entry_repository.dart` for the folder scan + in-memory store.
+See [docs/data-format.md](docs/data-format.md) for the full rules. See
+`lib/models/item_parser.dart` for the parser, and
+`lib/repository/item_repository.dart` for the folder scan and in-memory store.
 
 ## Screens
 
-- **Calendar** — every entry grouped under its day. Today's heading is always
-  shown (even with no entries); any other day appears only when it has one.
-  Each entry row has an "Edit" icon button (jumps to the Add form, prefilled),
-  a "Done" toggle that strikes through completed entries, and a delete button
-  that must be held for 0.7 seconds.
-- **Add** — a date button (opens a date picker, defaults to today) and a text
-  field. "Add" writes a new `.json` file and clears the field for the next one.
-- **Settings** — shows the current data folder and loaded entry count, lets you
-  pick a different folder, and (Android only) lets you (re-)grant full disk access.
+- **Day**: the items of one day, starting on today. Use ‹ › to step a day,
+  tap the date to pick one, or use "Today" to jump back.
+- **Range**: every day from a "From" date to a "To" date, set at the top, with
+  each day's items (empty days included). Defaults to the current week,
+  Sunday to Saturday.
+- **Settings**: shows the current data folder and the loaded item count. Lets
+  you pick a different folder, reload it, and see files that failed to parse.
+  On Android, also lets you (re-)grant full disk access.

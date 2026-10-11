@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'repository/entry_repository.dart';
+import 'repository/item_repository.dart';
 import 'screens/home_shell.dart';
 import 'screens/settings_screen.dart';
 
@@ -19,7 +19,7 @@ class CalendarApp extends StatefulWidget {
 }
 
 class _CalendarAppState extends State<CalendarApp> {
-  final _repository = EntryRepository();
+  final _repository = ItemRepository();
   bool _bootstrapped = false;
 
   @override
@@ -72,8 +72,10 @@ class _CalendarAppState extends State<CalendarApp> {
         body: SettingsScreen(repository: _repository),
       );
     }
-    if (_repository.isLoading) {
-      return const _LoadingScaffold(message: 'Loading entries…');
+    // Only the first load blanks the app; a Reload keeps the views (and their
+    // selected dates) on screen while it runs.
+    if (_repository.isLoading && !_repository.hasLoaded) {
+      return const _LoadingScaffold(message: 'Loading items…');
     }
     return HomeShell(repository: _repository);
   }
