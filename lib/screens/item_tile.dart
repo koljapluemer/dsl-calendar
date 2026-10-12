@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/item.dart';
 
-/// One item as listed under a day: its title, its description muted beneath
-/// it, and a "weekly" marker on recurring items.
+/// One item as listed under a day: its heading, the rest of its body muted
+/// beneath it, and a "weekly" marker on recurring items.
 class ItemTile extends StatelessWidget {
   const ItemTile({super.key, required this.item});
 
@@ -21,7 +21,7 @@ class ItemTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: Text(item.title)),
+              Expanded(child: Text(item.heading)),
               if (item.kind is Recurring)
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
@@ -32,9 +32,9 @@ class ItemTile extends StatelessWidget {
                 ),
             ],
           ),
-          if (item.description.isNotEmpty)
+          if (item.details.isNotEmpty)
             Text(
-              item.description.join('\n'),
+              item.details.join('\n'),
               style: theme.textTheme.bodySmall?.merge(muted),
             ),
         ],

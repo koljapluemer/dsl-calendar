@@ -99,10 +99,10 @@ HCI lecture 4pm-7pm
 recurring mo until 27-03
 ```
 
-- The first line is the title.
-- Description lines follow it.
-- The keyword section starts at the first line that begins with a primary
-  keyword (`appointment yy-mm-dd`, `recurring <mo..su> [until yy-mm-dd|yy-mm]`).
+- The first line is the heading; further body lines follow it.
+- The keyword section starts at the first line that begins with a keyword
+  (`appointment yy-mm-dd`, `recurring <mo..su> [until yy-mm-dd|yy-mm]`).
+- Files without such a keyword are plain notes and appear on no day.
 
 The keyword schema is vendored at `assets/dsl/keywords.yaml`. Refresh it with
 `just sync-spec`.

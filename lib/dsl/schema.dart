@@ -1,7 +1,25 @@
 import 'package:yaml/yaml.dart';
 
 /// The value types from the dsl spec's `language.md`.
-enum ValueType { date, month, weekday }
+enum ValueType { date, month, weekday, path }
+
+/// A keyword's `role` in `keywords.yaml`.
+enum Role {
+  /// The item's type; opens the keyword section.
+  primary,
+
+  /// Not a type, but opens the keyword section too.
+  property,
+
+  /// Only inside the keyword section.
+  modifier,
+
+  /// Machine-maintained; only inside a `( … )` state line.
+  state;
+
+  /// Whether a keyword of this role may start the keyword section at column 0.
+  bool get opensSection => this == primary || this == property;
+}
 
 /// One positional argument, or the value of an option.
 class ValueSpec {
@@ -16,7 +34,7 @@ class ValueSpec {
 class KeywordSpec {
   const KeywordSpec({
     required this.name,
-    required this.primary,
+    required this.role,
     this.args = const [],
     this.options = const {},
     this.excludes = const {},
@@ -24,8 +42,7 @@ class KeywordSpec {
 
   final String name;
 
-  /// Whether this keyword may start the keyword section.
-  final bool primary;
+  final Role role;
 
   final List<ValueSpec> args;
   final Map<String, ValueSpec> options;
@@ -60,16 +77,18 @@ class Schema {
   final Map<String, KeywordSpec> keywords;
 
   static KeywordSpec _keyword(String name, YamlMap map) {
-    final role = map['role'];
-    if (role != 'primary' && role != 'modifier') {
-      throw FormatException('Keyword "$name" has an invalid role: $role');
+    final role = Role.values.where((r) => r.name == map['role']).firstOrNull;
+    if (role == null) {
+      throw FormatException(
+        'Keyword "$name" has an invalid role: ${map['role']}',
+      );
     }
     final args = (map['args'] as YamlList?) ?? YamlList();
     final options = (map['options'] as YamlMap?) ?? YamlMap();
     final excludes = (map['excludes'] as YamlList?) ?? YamlList();
     return KeywordSpec(
       name: name,
-      primary: role == 'primary',
+      role: role,
       args: [
         for (final arg in args.cast<YamlMap>())
           ValueSpec(arg['name'] as String, _types(name, arg['type'])),

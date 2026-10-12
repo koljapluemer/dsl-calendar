@@ -34,16 +34,16 @@ void main() {
   group('example data', () {
     test('plain appointment', () {
       final item = _example('26-10-12-1');
-      expect(item.title, 'xHain');
-      expect(item.description, isEmpty);
+      expect(item.heading, 'xHain');
+      expect(item.details, isEmpty);
       expect((item.kind as Appointment).date, const DateOnly(2026, 10, 12));
       expect(item.warnings, isEmpty);
     });
 
-    test('appointment with a description line', () {
+    test('appointment with a second body line', () {
       final item = _example('26-10-12-2');
-      expect(item.title, 'meeting 5pm');
-      expect(item.description, ['(see email) ']);
+      expect(item.heading, 'meeting 5pm');
+      expect(item.details, ['(see email) ']);
     });
 
     test('open-ended recurring', () {
@@ -66,29 +66,44 @@ void main() {
   });
 
   group('structure', () {
-    test('title is never parsed for keywords', () {
+    test('the first line is never parsed for keywords', () {
       final item = _item('appointment w/ dentist\nappointment 26-10-12');
-      expect(item.title, 'appointment w/ dentist');
+      expect(item.heading, 'appointment w/ dentist');
     });
 
-    test('only a primary at column 0 starts the keyword section', () {
+    test('a body without keywords is a valid note on no day', () {
+      final item = _item('just a thought\nprio 3');
+      expect(item.details, ['prio 3']);
+      expect(item.kind, isNull);
+      expect(item.occursOn(const DateOnly(2026, 10, 12)), isFalse);
+    });
+
+    test('only an opener at column 0 starts the keyword section', () {
       final item = _item(
         'x\n'
         'iterable is not a primary\n'
         '  recurring, indented\n'
         'recurring mo',
       );
-      expect(item.description, [
+      expect(item.details, [
         'iterable is not a primary',
         '  recurring, indented',
       ]);
       expect(item.kind, isA<Recurring>());
     });
 
-    test('description keeps inner blank lines, drops outer ones', () {
+    test('body keeps inner blank lines, drops outer ones', () {
       final item = _item('\n\nx\n\na\n\nb\n\nappointment 26-10-12\n');
-      expect(item.title, 'x');
-      expect(item.description, ['a', '', 'b']);
+      expect(item.heading, 'x');
+      expect(item.details, ['', 'a', '', 'b']);
+    });
+
+    test('relationships, media and extra leave the kind alone', () {
+      final item = _item(
+        'x\nrecurring tu\nmedia images/a.png\n-> part of @y-123456\nextra\nz',
+      );
+      expect(item.kind, isA<Recurring>());
+      expect(item.warnings, isEmpty);
     });
 
     test('several clauses on one line', () {
@@ -117,7 +132,6 @@ void main() {
 
   group('errors', () {
     test('empty', () => expect(_errors(' \n\n'), ['empty@null']));
-    test('no_primary', () => expect(_errors('x\nprio 3'), ['no_primary@null']));
     test(
       'missing_arg',
       () => expect(_errors('x\nappointment'), ['missing_arg@2']),

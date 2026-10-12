@@ -36,20 +36,22 @@ class Recurring extends ItemKind {
 class Item {
   const Item({
     required this.path,
-    required this.title,
+    required this.heading,
     required this.kind,
-    this.description = const [],
+    this.details = const [],
     this.warnings = const [],
   });
 
   final String path;
-  final String title;
 
-  /// Verbatim lines between title and keyword section.
-  final List<String> description;
+  /// The first body line, trimmed.
+  final String heading;
 
-  /// Null for a valid item whose primary keyword the calendar doesn't know
-  /// yet (added to the schema later) — it then falls on no day.
+  /// The remaining body lines, verbatim.
+  final List<String> details;
+
+  /// Null for a valid item without a primary keyword the calendar knows: a
+  /// plain note, or a type added to the schema later. It falls on no day.
   final ItemKind? kind;
 
   /// E.g. unknown keywords. They don't make the item invalid.

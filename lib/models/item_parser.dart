@@ -30,8 +30,8 @@ ParseResult parseItem(Schema schema, String path, String text) {
   return ParsedItem(
     Item(
       path: path,
-      title: doc.title,
-      description: doc.description,
+      heading: doc.body.first.trim(),
+      details: doc.body.sublist(1),
       kind: _kind(doc),
       warnings: doc.warnings.toList(),
     ),

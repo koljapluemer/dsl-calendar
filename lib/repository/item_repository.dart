@@ -47,19 +47,21 @@ class ItemRepository extends ChangeNotifier {
 
   Schema? _schema;
   List<Item> _items = [];
+  List<Item> _itemsWithWarnings = [];
   List<ParseError> _errors = [];
 
   int get count => _items.length;
 
+  /// Items that fall on some day. Plain notes in the same folder (no primary
+  /// keyword the calendar knows) aren't held, so a folder of many notes stays
+  /// cheap to keep and to query day by day.
   List<Item> get items => List.unmodifiable(_items);
 
   /// Files that aren't valid items, by path.
   List<ParseError> get errors => List.unmodifiable(_errors);
 
-  /// Valid items that still have warnings, by path.
-  List<Item> get itemsWithWarnings =>
-      _items.where((i) => i.warnings.isNotEmpty).toList()
-        ..sort((a, b) => a.path.compareTo(b.path));
+  /// Valid items that still have warnings, by path, notes included.
+  List<Item> get itemsWithWarnings => List.unmodifiable(_itemsWithWarnings);
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -85,15 +87,19 @@ class ItemRepository extends ChangeNotifier {
         await rootBundle.loadString(_schemaAsset),
       );
       final parsed = await compute(parseFolderIsolate, (schema, folderPath!));
-      _items = [
+      final valid = [
         for (final r in parsed)
           if (r is ParsedItem) r.item,
       ];
+      _items = valid.where((i) => i.kind != null).toList();
+      _itemsWithWarnings = valid.where((i) => i.warnings.isNotEmpty).toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
       _errors = parsed.whereType<ParseError>().toList()
         ..sort((a, b) => a.path.compareTo(b.path));
     } catch (e) {
       loadError = e.toString();
       _items = [];
+      _itemsWithWarnings = [];
       _errors = [];
     }
 
@@ -102,8 +108,8 @@ class ItemRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Every item occurring on [day], sorted by title.
+  /// Every item occurring on [day], sorted by heading.
   List<Item> itemsOn(DateOnly day) =>
       _items.where((i) => i.occursOn(day)).toList()
-        ..sort((a, b) => a.title.compareTo(b.title));
+        ..sort((a, b) => a.heading.compareTo(b.heading));
 }

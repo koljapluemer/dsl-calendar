@@ -21,15 +21,19 @@ recurring mo until 27-03
 The calendar bundles a copy of `keywords.yaml` at `assets/dsl/keywords.yaml`
 and parses files using that copy, so keyword names, roles and argument types
 are not hardcoded. To pick up spec changes, run `just sync-spec`. A test fails
-when the copy differs from `../dsl/spec/keywords.yaml`.
+when the copy differs from `../dsl/spec/keywords.yaml`, and the parser runs the
+dsl repo's conformance cases (`spec/examples`).
 
 ## What the calendar does with keywords
 
 - `appointment <date>`: shown on that day.
 - `recurring <weekday> [until <date|month>]`: shown on every matching
   weekday up to and including `until`. A month means its last day.
-- Any other valid primary keyword: the item is valid, but appears on no day.
-- Description lines are shown muted under the title.
+- No primary keyword the calendar knows (a plain note, e.g. from graphirst
+  sharing the folder, or a primary added to the schema later): the item is
+  valid, but appears on no day and isn't kept in memory.
+- The first body line is the item's heading; the other body lines are shown
+  muted under it. Relationships, `media` and the extra block are ignored.
 
 ## Problems
 
